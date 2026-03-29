@@ -11,19 +11,19 @@ import (
 
 func registerSettingsRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 	se.Router.GET("/settings", func(re *core.RequestEvent) error {
-		info, _ := re.RequestInfo()
-		if info.Auth == nil {
+		userID, err := authedUserID(re)
+		if err != nil {
 			return re.Redirect(http.StatusTemporaryRedirect, "/login?redirect=/settings")
 		}
 
-		settings, _ := app.FindFirstRecordByFilter("settings", "user = {:user}", map[string]any{"user": info.Auth.Id})
+		settings, _ := app.FindFirstRecordByFilter("settings", "user = {:user}", map[string]any{"user": userID})
 		saved := re.Request.URL.Query().Get("saved") == "1"
 		return render(re, templates.Settings(settings, saved))
 	})
 
 	se.Router.POST("/settings", func(re *core.RequestEvent) error {
-		info, _ := re.RequestInfo()
-		if info.Auth == nil {
+		userID, err := authedUserID(re)
+		if err != nil {
 			return re.Redirect(http.StatusTemporaryRedirect, "/login?redirect=/settings")
 		}
 
@@ -32,14 +32,14 @@ func registerSettingsRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 		}
 		form := re.Request.PostForm
 
-		settings, err := app.FindFirstRecordByFilter("settings", "user = {:user}", map[string]any{"user": info.Auth.Id})
+		settings, err := app.FindFirstRecordByFilter("settings", "user = {:user}", map[string]any{"user": userID})
 		if err != nil {
 			collection, err := app.FindCollectionByNameOrId("settings")
 			if err != nil {
 				return re.InternalServerError("", err)
 			}
 			settings = core.NewRecord(collection)
-			settings.Set("user", info.Auth.Id)
+			settings.Set("user", userID)
 		}
 
 		if v, err := strconv.ParseFloat(form.Get("sleep_need_hours"), 64); err == nil && v > 0 {

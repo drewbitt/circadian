@@ -25,8 +25,8 @@ var (
 
 func registerFitbitAuthRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 	se.Router.GET("/auth/fitbit", func(re *core.RequestEvent) error {
-		info, _ := re.RequestInfo()
-		if info.Auth == nil {
+		userID, err := authedUserID(re)
+		if err != nil {
 			return re.Redirect(http.StatusTemporaryRedirect, "/login?redirect=/settings")
 		}
 
@@ -39,7 +39,7 @@ func registerFitbitAuthRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 		if err != nil {
 			return re.InternalServerError("Failed to generate nonce", err)
 		}
-		state := signState(app, info.Auth.Id, nonce)
+		state := signState(app, userID, nonce)
 
 		url := cfg.AuthCodeURL(state, oauth2.AccessTypeOffline)
 		return re.Redirect(http.StatusTemporaryRedirect, url)
@@ -70,7 +70,10 @@ func registerFitbitAuthRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 
 		settings, err := app.FindFirstRecordByFilter("settings", "user = {:user}", map[string]any{"user": userID})
 		if err != nil {
-			collection, _ := app.FindCollectionByNameOrId("settings")
+			collection, err := app.FindCollectionByNameOrId("settings")
+			if err != nil {
+				return re.InternalServerError("settings collection not found", err)
+			}
 			settings = core.NewRecord(collection)
 			settings.Set("user", userID)
 		}

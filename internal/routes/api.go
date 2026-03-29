@@ -40,12 +40,12 @@ func importFileToDisk(r io.Reader, filename string, parse func(string) ([]ingest
 func registerAPIRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 	// Get today's energy schedule.
 	se.Router.GET("/api/schedule", func(re *core.RequestEvent) error {
-		info, _ := re.RequestInfo()
-		if info.Auth == nil {
+		userID, err := authedUserID(re)
+		if err != nil {
 			return re.UnauthorizedError("", nil)
 		}
 
-		schedule, debt, err := loadTodayData(app, info.Auth.Id)
+		schedule, debt, err := loadTodayData(app, userID)
 		if err != nil {
 			return re.InternalServerError("Failed to load schedule", err)
 		}
@@ -58,8 +58,8 @@ func registerAPIRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 
 	// Import health data file.
 	se.Router.POST("/api/import", func(re *core.RequestEvent) error {
-		info, _ := re.RequestInfo()
-		if info.Auth == nil {
+		userID, err := authedUserID(re)
+		if err != nil {
 			return re.UnauthorizedError("", nil)
 		}
 
@@ -115,7 +115,7 @@ func registerAPIRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 			dateStr := rec.Date.Format("2006-01-02")
 			existing, _ := app.FindFirstRecordByFilter("sleep_records",
 				"user = {:user} && date = {:date} && source = {:source}",
-				map[string]any{"user": info.Auth.Id, "date": dateStr, "source": rec.Source},
+				map[string]any{"user": userID, "date": dateStr, "source": rec.Source},
 			)
 
 			var record *core.Record
@@ -123,7 +123,7 @@ func registerAPIRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 				record = existing
 			} else {
 				record = core.NewRecord(collection)
-				record.Set("user", info.Auth.Id)
+				record.Set("user", userID)
 			}
 
 			record.Set("date", rec.Date)
@@ -149,8 +149,8 @@ func registerAPIRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 
 	// Get sleep history.
 	se.Router.GET("/api/sleep", func(re *core.RequestEvent) error {
-		info, _ := re.RequestInfo()
-		if info.Auth == nil {
+		userID, err := authedUserID(re)
+		if err != nil {
 			return re.UnauthorizedError("", nil)
 		}
 
@@ -160,7 +160,7 @@ func registerAPIRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 			"sleep_records",
 			"user = {:user} && date >= {:since}",
 			"-date", 0, 0,
-			map[string]any{"user": info.Auth.Id, "since": since},
+			map[string]any{"user": userID, "since": since},
 		)
 		if err != nil {
 			return re.InternalServerError("", err)
@@ -179,7 +179,7 @@ func registerAPIRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 		}
 
 		sleepNeed := 8.0
-		settings, err := app.FindFirstRecordByFilter("settings", "user = {:user}", map[string]any{"user": info.Auth.Id})
+		settings, err := app.FindFirstRecordByFilter("settings", "user = {:user}", map[string]any{"user": userID})
 		if err == nil {
 			if sn := settings.GetFloat("sleep_need_hours"); sn > 0 {
 				sleepNeed = sn

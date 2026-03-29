@@ -17,8 +17,7 @@ func dateOnly(t time.Time) time.Time {
 func registerSleepRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 	// Manual sleep entry form.
 	se.Router.GET("/sleep", func(re *core.RequestEvent) error {
-		info, _ := re.RequestInfo()
-		if info.Auth == nil {
+		if _, err := authedUserID(re); err != nil {
 			return re.Redirect(http.StatusTemporaryRedirect, "/login?redirect=/sleep")
 		}
 
@@ -27,8 +26,8 @@ func registerSleepRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 
 	// Submit manual sleep entry.
 	se.Router.POST("/sleep", func(re *core.RequestEvent) error {
-		info, _ := re.RequestInfo()
-		if info.Auth == nil {
+		userID, err := authedUserID(re)
+		if err != nil {
 			return re.Redirect(http.StatusTemporaryRedirect, "/login?redirect=/sleep")
 		}
 
@@ -65,7 +64,7 @@ func registerSleepRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 		}
 
 		record := core.NewRecord(collection)
-		record.Set("user", info.Auth.Id)
+		record.Set("user", userID)
 		record.Set("date", sleepDate)
 		record.Set("sleep_start", sleepStart)
 		record.Set("sleep_end", sleepEnd)

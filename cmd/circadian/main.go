@@ -199,7 +199,11 @@ func syncFitbitForAllUsers(app *pocketbase.PocketBase) {
 				continue
 			}
 
-			collection, _ := app.FindCollectionByNameOrId("sleep_records")
+			collection, err := app.FindCollectionByNameOrId("sleep_records")
+			if err != nil {
+				slog.Error("sleep_records collection not found", "error", err)
+				continue
+			}
 			for _, rec := range records {
 				dateStr := rec.Date.Format("2006-01-02")
 				existing, _ := app.FindFirstRecordByFilter("sleep_records",

@@ -84,6 +84,9 @@ func parseGBSleepSessions(db *sql.DB) ([]SleepRecord, error) {
 			AwakeMinutes:    awake,
 		})
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate sleep sessions: %w", err)
+	}
 
 	return records, nil
 }
@@ -122,6 +125,9 @@ func parseGBActivitySamples(db *sql.DB) ([]SleepRecord, error) {
 			continue
 		}
 		samples = append(samples, s)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate activity samples: %w", err)
 	}
 
 	if len(samples) == 0 {

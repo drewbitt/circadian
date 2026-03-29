@@ -84,7 +84,10 @@ func FetchFitbitSleep(ctx context.Context, token *oauth2.Token, date time.Time) 
 		if err != nil {
 			continue
 		}
-		sleepDate, _ := time.Parse("2006-01-02", sl.DateOfSleep)
+		sleepDate, err := time.Parse("2006-01-02", sl.DateOfSleep)
+		if err != nil {
+			continue
+		}
 
 		rec := SleepRecord{
 			Date:            sleepDate,

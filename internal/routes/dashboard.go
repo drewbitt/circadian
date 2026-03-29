@@ -17,12 +17,11 @@ import (
 func registerDashboardRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 	// Full page dashboard.
 	se.Router.GET("/", func(re *core.RequestEvent) error {
-		info, _ := re.RequestInfo()
-		if info.Auth == nil {
+		userID, err := authedUserID(re)
+		if err != nil {
 			return re.Redirect(http.StatusTemporaryRedirect, "/login?redirect=/")
 		}
 
-		userID := info.Auth.Id
 		schedule, debt, err := loadTodayData(app, userID)
 		if err != nil {
 			schedule = engine.Schedule{}
@@ -34,12 +33,11 @@ func registerDashboardRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 
 	// SSE endpoint for live dashboard updates.
 	se.Router.GET("/sse/dashboard", func(re *core.RequestEvent) error {
-		info, _ := re.RequestInfo()
-		if info.Auth == nil {
+		userID, err := authedUserID(re)
+		if err != nil {
 			return re.UnauthorizedError("", nil)
 		}
 
-		userID := info.Auth.Id
 		sse := datastar.NewSSE(re.Response, re.Request)
 
 		schedule, debt, err := loadTodayData(app, userID)
@@ -49,7 +47,10 @@ func registerDashboardRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 		}
 
 		// Send chart data as a script execution.
-		chartData, _ := json.Marshal(schedule.Points)
+		chartData, err := json.Marshal(schedule.Points)
+		if err != nil {
+			return fmt.Errorf("marshal chart data: %w", err)
+		}
 		_ = sse.ExecuteScript(fmt.Sprintf(`window.updateEnergyChart(%s)`, chartData))
 
 		// Patch the debt card.
@@ -77,15 +78,17 @@ func loadTodayData(app *pocketbase.PocketBase, userID string) (engine.Schedule, 
 	if err == nil && scheduleRec != nil {
 		var points []engine.EnergyPoint
 		raw := scheduleRec.Get("schedule_json")
-		if data, err := json.Marshal(raw); err == nil {
-			_ = json.Unmarshal(data, &points)
+		data, err := json.Marshal(raw)
+		if err == nil {
+			err = json.Unmarshal(data, &points)
 		}
-		wakeTime := scheduleRec.GetDateTime("wake_time").Time()
-		schedule := engine.ClassifyZones(points, wakeTime)
-
-		// Load debt.
-		debt := loadDebt(app, userID)
-		return schedule, debt, nil
+		if err == nil && len(points) > 0 {
+			wakeTime := scheduleRec.GetDateTime("wake_time").Time()
+			schedule := engine.ClassifyZones(points, wakeTime)
+			debt := loadDebt(app, userID)
+			return schedule, debt, nil
+		}
+		// Cached data corrupt or empty — fall through to recompute.
 	}
 
 	// No cached schedule — compute on the fly.
