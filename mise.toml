@@ -3,6 +3,10 @@
 go = "1.26"
 "go:github.com/a-h/templ/cmd/templ" = "latest"
 "go:github.com/air-verse/air" = "latest"
+golangci-lint = "2.11.4"
+
+[hooks]
+enter = 'git config core.hooksPath .githooks 2>/dev/null || true'
 
 [env]
 CGO_ENABLED = "0"
@@ -80,6 +84,15 @@ run = "golangci-lint fmt ./..."
 [tasks.tidy]
 description = "Tidy go.mod"
 run = "go mod tidy"
+
+# ── Git hooks ─────────────────────────────────────────────────
+
+[tasks.pre-commit]
+description = "Pre-commit checks (lint + tidy)"
+run = """
+golangci-lint run ./...
+go mod tidy -diff
+"""
 
 # ── Clean ─────────────────────────────────────────────────────
 

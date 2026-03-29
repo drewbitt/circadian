@@ -6,3 +6,4 @@ assets/dist/*
 /circadian
 *.exe
 .env
+.mise/

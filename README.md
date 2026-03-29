@@ -113,19 +113,19 @@ PocketBase admin panel is at `/_/` for superuser operations.
 
 ## Development
 
-Requires [mise](https://mise.jdx.dev/) for tool management.
-
 ```bash
-mise install          # install Go, templ, air, tailwind
-mise run dev          # start dev servers (templ watch + tailwind watch + hot reload)
+./bin/mise install    # installs Go, templ, air, tailwind
+./bin/mise run dev    # templ watch + tailwind watch + hot reload
 ```
 
-App runs at `http://localhost:8090`. PocketBase admin at `http://localhost:8090/_/`.
+No setup beyond cloning. The [mise](https://mise.jdx.dev/) bootstrap script in `bin/` handles everything. Git hooks auto-configure on directory entry.
+
+`http://localhost:8090` for the app, `/_/` for the PocketBase admin.
 
 ```bash
-mise run test         # run all tests
-mise run build        # production binary -> ./circadian
-mise tasks            # list all commands
+./bin/mise run test
+./bin/mise run build   # -> ./circadian
+./bin/mise tasks       # list all commands
 ```
 
 ## License
