@@ -31,10 +31,12 @@ func registerSettingsRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 		}
 
 		data := struct {
-			SleepNeedHours       float64 `json:"sleep_need_hours"`
-			NtfyTopic            string  `json:"ntfy_topic"`
-			NtfyServer           string  `json:"ntfy_server"`
-			NotificationsEnabled bool    `json:"notifications_enabled"`
+			SleepNeedHours       float64 `json:"sleep_need_hours" form:"sleep_need_hours"`
+			NtfyTopic            string  `json:"ntfy_topic" form:"ntfy_topic"`
+			NtfyServer           string  `json:"ntfy_server" form:"ntfy_server"`
+			NtfyAccessToken      string  `json:"ntfy_access_token" form:"ntfy_access_token"`
+			SiteURL              string  `json:"site_url" form:"site_url"`
+			NotificationsEnabled bool    `json:"notifications_enabled" form:"notifications_enabled"`
 		}{}
 		if err := re.BindBody(&data); err != nil {
 			return re.BadRequestError("Invalid data", err)
@@ -58,6 +60,8 @@ func registerSettingsRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 		if data.NtfyServer != "" {
 			settings.Set("ntfy_server", data.NtfyServer)
 		}
+		settings.Set("ntfy_access_token", data.NtfyAccessToken)
+		settings.Set("site_url", data.SiteURL)
 		settings.Set("notifications_enabled", data.NotificationsEnabled)
 
 		if err := app.Save(settings); err != nil {

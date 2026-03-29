@@ -10,7 +10,6 @@ import (
 	"github.com/drewbitt/circadian/services"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/tools/cron"
 	"github.com/pocketbase/pocketbase/tools/hook"
 	"golang.org/x/oauth2"
 )
@@ -44,25 +43,12 @@ func main() {
 		},
 	})
 
-	// Register cron jobs.
-	app.OnServe().Bind(&hook.Handler[*core.ServeEvent]{
-		Id: "cron-jobs",
-		Func: func(se *core.ServeEvent) error {
-			scheduler := cron.New()
+	app.Cron().MustAdd("morning-schedule", "0 8 * * *", func() {
+		runMorningJobForAllUsers(app)
+	})
 
-			// Morning job: compute energy schedules for all users (8am daily).
-			scheduler.MustAdd("morning-schedule", "0 8 * * *", func() {
-				runMorningJobForAllUsers(app)
-			})
-
-			// Fitbit sync: refresh data every 4 hours.
-			scheduler.MustAdd("fitbit-sync", "0 */4 * * *", func() {
-				syncFitbitForAllUsers(app)
-			})
-
-			scheduler.Start()
-			return se.Next()
-		},
+	app.Cron().MustAdd("fitbit-sync", "0 */4 * * *", func() {
+		syncFitbitForAllUsers(app)
 	})
 
 	if err := app.Start(); err != nil {
@@ -127,6 +113,8 @@ func ensureCollections(app *pocketbase.PocketBase) {
 			&core.NumberField{Name: "sleep_need_hours"},
 			&core.TextField{Name: "ntfy_topic"},
 			&core.TextField{Name: "ntfy_server"},
+			&core.TextField{Name: "ntfy_access_token"},
+			&core.TextField{Name: "site_url"},
 			&core.TextField{Name: "fitbit_access_token"},
 			&core.TextField{Name: "fitbit_refresh_token"},
 			&core.DateField{Name: "fitbit_token_expiry"},
@@ -213,6 +201,7 @@ func syncFitbitForAllUsers(app *pocketbase.PocketBase) {
 				record.Set("awake_minutes", rec.AwakeMinutes)
 				app.Save(record)
 			}
+
 		}
 	}
 }

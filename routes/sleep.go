@@ -28,8 +28,8 @@ func registerSleepRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 		}
 
 		data := struct {
-			SleepStart string `json:"sleep_start"`
-			SleepEnd   string `json:"sleep_end"`
+			SleepStart string `json:"sleep_start" form:"sleep_start"`
+			SleepEnd   string `json:"sleep_end" form:"sleep_end"`
 		}{}
 		if err := re.BindBody(&data); err != nil {
 			return re.BadRequestError("Invalid data", err)
