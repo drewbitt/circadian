@@ -1,0 +1,8 @@
+tmp/
+pb_data/
+assets/dist/
+!assets/dist/.gitkeep
+*_templ.go
+circadian
+*.exe
+.env

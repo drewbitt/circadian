@@ -1,0 +1,215 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/pocketbase/pocketbase/core"
+)
+
+templ Settings(settings *core.Record) {
+	@Layout("Settings") {
+		<div class="mx-auto max-w-lg space-y-6">
+			<!-- General Settings -->
+			<div class="rounded-xl bg-gray-900 border border-gray-800 p-6">
+				<h2 class="text-lg font-semibold text-gray-100 mb-6">Settings</h2>
+				<form method="POST" action="/settings" class="space-y-6">
+					<div>
+						<label for="sleep_need_hours" class="block text-sm font-medium text-gray-300 mb-2">
+							Sleep Need (hours)
+						</label>
+						<input
+							type="number"
+							id="sleep_need_hours"
+							name="sleep_need_hours"
+							step="0.5"
+							min="4"
+							max="12"
+							value={ sleepNeedValue(settings) }
+							class="block w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-gray-100 focus:border-indigo-500 focus:ring-indigo-500"
+						/>
+					</div>
+
+					<div>
+						<label for="ntfy_topic" class="block text-sm font-medium text-gray-300 mb-2">
+							ntfy Topic
+						</label>
+						<input
+							type="text"
+							id="ntfy_topic"
+							name="ntfy_topic"
+							placeholder="my-circadian-alerts"
+							value={ getSettingStr(settings, "ntfy_topic") }
+							class="block w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-gray-100 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500"
+						/>
+						<p class="mt-1 text-xs text-gray-500">Used for push notifications via ntfy.sh</p>
+					</div>
+
+					<div>
+						<label for="ntfy_server" class="block text-sm font-medium text-gray-300 mb-2">
+							ntfy Server
+						</label>
+						<input
+							type="url"
+							id="ntfy_server"
+							name="ntfy_server"
+							placeholder="https://ntfy.sh"
+							value={ getSettingStr(settings, "ntfy_server") }
+							class="block w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-gray-100 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500"
+						/>
+					</div>
+
+					<div class="flex items-center gap-3">
+						<input
+							type="checkbox"
+							id="notifications_enabled"
+							name="notifications_enabled"
+							checked?={ getSettingBool(settings, "notifications_enabled") }
+							class="h-4 w-4 rounded border-gray-700 bg-gray-800 text-indigo-600 focus:ring-indigo-500"
+						/>
+						<label for="notifications_enabled" class="text-sm text-gray-300">
+							Enable notifications
+						</label>
+					</div>
+
+					<button
+						type="submit"
+						class="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+					>
+						Save Settings
+					</button>
+				</form>
+			</div>
+
+			<!-- Wearable Connections -->
+			<div class="rounded-xl bg-gray-900 border border-gray-800 p-6">
+				<h2 class="text-lg font-semibold text-gray-100 mb-4">Data Sources</h2>
+				<div class="space-y-4">
+					<!-- Fitbit -->
+					<div class="flex items-center justify-between">
+						<div>
+							<div class="text-sm font-medium text-gray-200">Fitbit</div>
+							<div class="text-xs text-gray-500">Auto-sync sleep data via OAuth</div>
+						</div>
+						if hasFitbitToken(settings) {
+							<span class="text-xs font-medium text-green-400 bg-green-400/10 px-2 py-1 rounded-full">Connected</span>
+						} else {
+							<a
+								href="/auth/fitbit"
+								class="rounded-lg bg-gray-800 border border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-700"
+							>
+								Connect
+							</a>
+						}
+					</div>
+
+					<!-- File Imports -->
+					<div class="border-t border-gray-800 pt-4">
+						<div class="text-sm font-medium text-gray-200 mb-3">File Import</div>
+						<form
+							action="/api/import"
+							method="POST"
+							enctype="multipart/form-data"
+							class="space-y-3"
+						>
+							<select
+								name="source"
+								class="block w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-gray-100 focus:border-indigo-500 focus:ring-indigo-500"
+							>
+								<option value="healthconnect">Android Health Connect (JSON)</option>
+								<option value="applehealth">Apple Health (ZIP/XML)</option>
+								<option value="gadgetbridge">Gadgetbridge (SQLite)</option>
+							</select>
+							<input
+								type="file"
+								name="file"
+								accept=".json,.xml,.zip,.sqlite,.db"
+								class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-gray-800 file:text-sm file:font-medium file:text-gray-300 hover:file:bg-gray-700"
+							/>
+							<button
+								type="submit"
+								class="rounded-lg bg-gray-800 border border-gray-700 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700"
+							>
+								Import
+							</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+}
+
+templ Login() {
+	@Layout("Login") {
+		<div class="flex min-h-[60vh] items-center justify-center">
+			<div class="w-full max-w-sm rounded-xl bg-gray-900 border border-gray-800 p-8">
+				<h1 class="text-2xl font-bold text-gray-100 text-center mb-6">Circadian</h1>
+				<p class="text-gray-400 text-center text-sm mb-6">
+					Sign in to track your energy rhythms
+				</p>
+				<form method="POST" action="/api/collections/users/auth-with-password" class="space-y-4">
+					<div>
+						<input
+							type="email"
+							name="identity"
+							placeholder="Email"
+							autocomplete="email"
+							required
+							class="block w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-gray-100 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500"
+						/>
+					</div>
+					<div>
+						<input
+							type="password"
+							name="password"
+							placeholder="Password"
+							autocomplete="current-password"
+							required
+							class="block w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-gray-100 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500"
+						/>
+					</div>
+					<button
+						type="submit"
+						class="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500"
+					>
+						Sign In
+					</button>
+				</form>
+				<p class="mt-4 text-center text-xs text-gray-500">
+					Create an account via the <a href="/_/" class="text-indigo-400 hover:text-indigo-300">admin panel</a>
+				</p>
+			</div>
+		</div>
+	}
+}
+
+func sleepNeedValue(settings *core.Record) string {
+	if settings == nil {
+		return "8.0"
+	}
+	v := settings.GetFloat("sleep_need_hours")
+	if v == 0 {
+		return "8.0"
+	}
+	return fmt.Sprintf("%.1f", v)
+}
+
+func getSettingStr(settings *core.Record, key string) string {
+	if settings == nil {
+		return ""
+	}
+	return settings.GetString(key)
+}
+
+func getSettingBool(settings *core.Record, key string) bool {
+	if settings == nil {
+		return false
+	}
+	return settings.GetBool(key)
+}
+
+func hasFitbitToken(settings *core.Record) bool {
+	if settings == nil {
+		return false
+	}
+	return settings.GetString("fitbit_access_token") != ""
+}

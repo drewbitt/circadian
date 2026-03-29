@@ -1,0 +1,92 @@
+[tools]
+"github:tailwindlabs/tailwindcss" = "4.2.2"
+go = "1.26"
+"go:github.com/a-h/templ/cmd/templ" = "latest"
+"go:github.com/air-verse/air" = "latest"
+
+[env]
+CGO_ENABLED = "0"
+
+# ── Development ───────────────────────────────────────────────
+
+[tasks.dev]
+description = "Start development servers (templ + tailwind + air)"
+depends = ["dev:templ-watch", "dev:tailwind-watch", "dev:air"]
+wait_for = ["generate"]
+
+[tasks."dev:templ-watch"]
+description = "Watch and regenerate templ files"
+run = "templ generate --watch"
+
+[tasks."dev:tailwind-watch"]
+description = "Watch and rebuild Tailwind CSS"
+run = "tailwindcss -i assets/input.css -o assets/dist/styles.min.css --watch --minify"
+
+[tasks."dev:air"]
+description = "Run Go with hot reload"
+run = "air"
+
+# ── Code generation ───────────────────────────────────────────
+
+[tasks.generate]
+description = "Generate templ and Tailwind CSS"
+run = """
+mkdir -p assets/dist
+templ generate
+tailwindcss -i assets/input.css -o assets/dist/styles.min.css --minify
+"""
+sources = ["templates/**/*.templ", "assets/input.css"]
+outputs = ["assets/dist/styles.min.css"]
+
+# ── Build ─────────────────────────────────────────────────────
+
+[tasks.build]
+description = "Build production binary"
+depends = ["generate"]
+run = "go build -o circadian ."
+sources = ["**/*.go", "go.mod", "go.sum"]
+outputs = ["circadian"]
+
+# ── Test ──────────────────────────────────────────────────────
+
+[tasks.test]
+description = "Run all tests"
+run = "go test ./..."
+
+[tasks."test:verbose"]
+description = "Run all tests with verbose output"
+run = "go test -v ./..."
+
+[tasks."test:engine"]
+description = "Run engine tests only"
+run = "go test -v ./engine/"
+
+# ── Lint & format ─────────────────────────────────────────────
+
+[tasks.vet]
+description = "Run go vet"
+run = "go vet ./..."
+
+[tasks.fmt]
+description = "Format Go code"
+run = "go fmt ./..."
+
+[tasks.tidy]
+description = "Tidy go.mod"
+run = "go mod tidy"
+
+# ── Setup ─────────────────────────────────────────────────────
+
+[tasks.setup]
+description = "Install all dependencies"
+run = ["mise install"]
+
+# ── Clean ─────────────────────────────────────────────────────
+
+[tasks.clean]
+description = "Remove build artifacts"
+run = """
+rm -f circadian
+rm -rf assets/dist
+find . -name '*_templ.go' -delete
+"""
