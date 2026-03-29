@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/drewbitt/circadian/internal/engine"
-	"github.com/drewbitt/circadian/internal/templates"
+	"github.com/drewbitt/meridian/internal/engine"
+	"github.com/drewbitt/meridian/internal/templates"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/starfederation/datastar-go/datastar"
 )

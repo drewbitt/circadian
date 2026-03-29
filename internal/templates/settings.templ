@@ -52,7 +52,7 @@ templ Settings(settings *core.Record, saved bool, importedCount string, importEr
 							type="text"
 							id="ntfy_topic"
 							name="ntfy_topic"
-							placeholder="my-circadian-alerts"
+							placeholder="my-meridian-alerts"
 							value={ getSettingStr(settings, "ntfy_topic") }
 							class="block w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-gray-100 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500"
 						/>
@@ -96,7 +96,7 @@ templ Settings(settings *core.Record, saved bool, importedCount string, importEr
 							type="url"
 							id="site_url"
 							name="site_url"
-							placeholder="https://circadian.example.com"
+							placeholder="https://meridian.example.com"
 							value={ getSettingStr(settings, "site_url") }
 							class="block w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-gray-100 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500"
 						/>

@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/drewbitt/circadian/internal/ingest"
-	"github.com/drewbitt/circadian/internal/templates"
+	"github.com/drewbitt/meridian/internal/ingest"
+	"github.com/drewbitt/meridian/internal/templates"
 	"github.com/pocketbase/pocketbase/core"
 )
 

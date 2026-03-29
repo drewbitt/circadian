@@ -29,7 +29,7 @@ RUN mkdir -p assets/dist && \
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 go build -o /app ./cmd/circadian
+    CGO_ENABLED=0 go build -o /app ./cmd/meridian
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
@@ -39,9 +39,9 @@ RUN mkdir /pb_data
 
 FROM gcr.io/distroless/static-debian12:nonroot
 
-LABEL org.opencontainers.image.title="Circadian" \
-      org.opencontainers.image.description="Self-hosted circadian rhythm tracker" \
-      org.opencontainers.image.source="https://github.com/drewbitt/circadian" \
+LABEL org.opencontainers.image.title="Meridian" \
+      org.opencontainers.image.description="Self-hosted sleep and energy tracker" \
+      org.opencontainers.image.source="https://github.com/drewbitt/meridian" \
       org.opencontainers.image.licenses="AGPL-3.0"
 
 COPY --from=build /app /app

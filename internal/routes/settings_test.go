@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/drewbitt/circadian/internal/schema"
+	"github.com/drewbitt/meridian/internal/schema"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 )

@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/drewbitt/circadian/internal/ingest"
+	"github.com/drewbitt/meridian/internal/ingest"
 	"github.com/pocketbase/pocketbase/core"
 	"golang.org/x/oauth2"
 )

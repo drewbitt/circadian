@@ -1,13 +1,11 @@
-# Circadian
+# Meridian
 
-[![CI](https://github.com/drewbitt/circadian/actions/workflows/ci.yml/badge.svg)](https://github.com/drewbitt/circadian/actions/workflows/ci.yml)
-[![License: AGPL-3.0](https://img.shields.io/github/license/drewbitt/circadian)](LICENSE)
+[![CI](https://github.com/drewbitt/meridian/actions/workflows/ci.yml/badge.svg)](https://github.com/drewbitt/meridian/actions/workflows/ci.yml)
+[![License: AGPL-3.0](https://img.shields.io/github/license/drewbitt/meridian)](LICENSE)
 
-Self-hosted circadian rhythm tracker. Predicts energy levels using sleep science, tracks sleep debt, and sends timed notifications via ntfy.
+Self-hosted sleep and energy tracker. Meridian turns sleep data into alertness forecasts, tracks sleep debt, and sends timed notifications via ntfy.
 
 One Go binary. One SQLite file.
-
-<!-- ![Circadian Dashboard](docs/screenshot.png) -->
 
 ## Quick Start
 
@@ -15,10 +13,10 @@ One Go binary. One SQLite file.
 
 ```bash
 docker run -d \
-  --name circadian \
+  --name meridian \
   -p 8090:8090 \
-  -v circadian_data:/pb_data \
-  ghcr.io/drewbitt/circadian:latest
+  -v meridian_data:/pb_data \
+  ghcr.io/drewbitt/meridian:latest
 ```
 
 Then open `http://localhost:8090`.
@@ -31,37 +29,37 @@ Once you've registered, disable public signups:
 
 ```bash
 docker run -d \
-  --name circadian \
+  --name meridian \
   -p 8090:8090 \
   -e ALLOW_REGISTRATION=false \
-  -v circadian_data:/pb_data \
-  ghcr.io/drewbitt/circadian:latest
+  -v meridian_data:/pb_data \
+  ghcr.io/drewbitt/meridian:latest
 ```
 
 ### Docker Compose
 
 ```yaml
 services:
-  circadian:
-    image: ghcr.io/drewbitt/circadian:latest
+  meridian:
+    image: ghcr.io/drewbitt/meridian:latest
     ports:
       - "8090:8090"
     volumes:
-      - circadian_data:/pb_data
+      - meridian_data:/pb_data
     environment:
       - ALLOW_REGISTRATION=false  # set to true for first run
       - TZ=America/New_York       # your timezone
     restart: unless-stopped
 
 volumes:
-  circadian_data:
+  meridian_data:
 ```
 
 ### Build from source
 
 ```bash
-docker build -t circadian .
-docker run -d -p 8090:8090 -v circadian_data:/pb_data circadian
+docker build -t meridian .
+docker run -d -p 8090:8090 -v meridian_data:/pb_data meridian
 ```
 
 Data lives in `/pb_data` (SQLite database + uploads). Back up this directory.
@@ -124,7 +122,7 @@ No setup beyond cloning. The [mise](https://mise.jdx.dev/) bootstrap script in `
 
 ```bash
 ./bin/mise run test
-./bin/mise run build   # -> ./circadian
+./bin/mise run build   # -> ./meridian
 ./bin/mise tasks       # list all commands
 ```
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/drewbitt/circadian/internal/engine"
+	"github.com/drewbitt/meridian/internal/engine"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 )

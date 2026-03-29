@@ -47,23 +47,26 @@ outputs = ["assets/dist/styles.min.css"]
 [tasks.build]
 description = "Build production binary"
 depends = ["generate"]
-run = "go build -o circadian ./cmd/circadian"
+run = "go build -o meridian ./cmd/meridian"
 sources = ["**/*.go", "go.mod", "go.sum"]
-outputs = ["circadian"]
+outputs = ["meridian"]
 
 # ── Test ──────────────────────────────────────────────────────
 
 [tasks.test]
 description = "Run all tests"
 run = "go test -race ./..."
+env = { CGO_ENABLED = "1" }
 
 [tasks."test:verbose"]
 description = "Run all tests with verbose output"
 run = "go test -race -v ./..."
+env = { CGO_ENABLED = "1" }
 
 [tasks."test:engine"]
 description = "Run engine tests only"
 run = "go test -race -v ./internal/engine/"
+env = { CGO_ENABLED = "1" }
 
 # ── Lint & format ─────────────────────────────────────────────
 
@@ -99,7 +102,7 @@ go mod tidy -diff
 [tasks.clean]
 description = "Remove build artifacts"
 run = """
-rm -f circadian
+rm -f meridian
 rm -rf assets/dist
 find . -name '*_templ.go' -delete
 """

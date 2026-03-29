@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/drewbitt/circadian/internal/engine"
-	"github.com/drewbitt/circadian/internal/ingest"
+	"github.com/drewbitt/meridian/internal/engine"
+	"github.com/drewbitt/meridian/internal/ingest"
 	"github.com/pocketbase/pocketbase/core"
 )
 
@@ -18,7 +18,7 @@ const maxUploadSize = 100 << 20
 
 func importFileToDisk(r io.Reader, filename string, parse func(string) ([]ingest.SleepRecord, error)) ([]ingest.SleepRecord, error) {
 	safeName := filepath.Base(filename)
-	tmp, err := os.CreateTemp("", "circadian-import-*-"+safeName)
+	tmp, err := os.CreateTemp("", "meridian-import-*-"+safeName)
 	if err != nil {
 		return nil, err
 	}

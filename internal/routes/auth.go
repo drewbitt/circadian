@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/a-h/templ"
-	"github.com/drewbitt/circadian/internal/templates"
+	"github.com/drewbitt/meridian/internal/templates"
 	"github.com/pocketbase/pocketbase/core"
 )
 

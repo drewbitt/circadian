@@ -2,7 +2,7 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-  cmd = "go build -o ./tmp/main ./cmd/circadian"
+  cmd = "go build -o ./tmp/main ./cmd/meridian"
   bin = "./tmp/main"
   entrypoint = ["./tmp/main", "serve", "--dir=pb_data"]
   delay = 1000

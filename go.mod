@@ -1,4 +1,4 @@
-module github.com/drewbitt/circadian
+module github.com/drewbitt/meridian
 
 go 1.26
 
