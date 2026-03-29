@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -29,7 +30,9 @@ func importFileToDisk(r io.Reader, filename string, parse func(string) ([]ingest
 		tmp.Close()
 		return nil, err
 	}
-	tmp.Close()
+	if err := tmp.Close(); err != nil {
+		return nil, fmt.Errorf("flush temp file: %w", err)
+	}
 
 	return parse(tmpPath)
 }

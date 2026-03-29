@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"bytes"
 	"net/http"
 	"strconv"
 
@@ -19,11 +18,7 @@ func registerSettingsRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 
 		settings, _ := app.FindFirstRecordByFilter("settings", "user = {:user}", map[string]any{"user": info.Auth.Id})
 		saved := re.Request.URL.Query().Get("saved") == "1"
-		var buf bytes.Buffer
-		_ = templates.Settings(settings, saved).Render(re.Request.Context(), &buf)
-		re.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = re.Response.Write(buf.Bytes())
-		return nil
+		return render(re, templates.Settings(settings, saved))
 	})
 
 	se.Router.POST("/settings", func(re *core.RequestEvent) error {

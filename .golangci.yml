@@ -34,14 +34,12 @@ linters:
     errcheck:
       exclude-functions:
         - fmt.Fprintf
-        - fmt.Sprintf
         - (*os.File).Close
         - (*database/sql.DB).Close
         - (*database/sql.Rows).Close
         - (*archive/zip.ReadCloser).Close
         - (mime/multipart.File).Close
         - (io.Closer).Close
-        - (net/http.ResponseWriter).Write
         - os.Remove
     gosec:
       excludes:

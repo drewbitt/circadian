@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"bytes"
 	"net/http"
 	"time"
 
@@ -23,11 +22,7 @@ func registerSleepRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 			return re.Redirect(http.StatusTemporaryRedirect, "/login?redirect=/sleep")
 		}
 
-		var buf bytes.Buffer
-		_ = templates.SleepEntry().Render(re.Request.Context(), &buf)
-		re.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = re.Response.Write(buf.Bytes())
-		return nil
+		return render(re, templates.SleepEntry())
 	})
 
 	// Submit manual sleep entry.

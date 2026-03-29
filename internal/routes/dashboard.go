@@ -29,13 +29,7 @@ func registerDashboardRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 			debt = engine.SleepDebt{}
 		}
 
-		var buf bytes.Buffer
-		if err := templates.Dashboard(schedule, debt).Render(re.Request.Context(), &buf); err != nil {
-			return re.InternalServerError("render failed", err)
-		}
-		re.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = re.Response.Write(buf.Bytes())
-		return nil
+		return render(re, templates.Dashboard(schedule, debt))
 	})
 
 	// SSE endpoint for live dashboard updates.
