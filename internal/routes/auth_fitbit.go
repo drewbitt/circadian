@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/drewbitt/circadian/internal/ingest"
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"golang.org/x/oauth2"
 )
@@ -23,7 +22,7 @@ var (
 	errMalformedPayload = errors.New("malformed state payload")
 )
 
-func registerFitbitAuthRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
+func registerFitbitAuthRoutes(se *core.ServeEvent, app core.App) {
 	se.Router.GET("/auth/fitbit", func(re *core.RequestEvent) error {
 		userID, err := authedUserID(re)
 		if err != nil {
@@ -90,7 +89,7 @@ func registerFitbitAuthRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 	})
 }
 
-func fitbitConfig(app *pocketbase.PocketBase) *oauth2.Config {
+func fitbitConfig(app core.App) *oauth2.Config {
 	settings, err := app.FindFirstRecordByFilter("settings", "fitbit_client_id != ''", nil)
 	if err != nil {
 		return nil
@@ -128,11 +127,11 @@ func generateNonce() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func oauthSecret(app *pocketbase.PocketBase) []byte {
+func oauthSecret(app core.App) []byte {
 	return []byte(app.Settings().Meta.AppURL + ":" + app.Settings().Meta.SenderAddress + ":" + app.Settings().Meta.SenderName)
 }
 
-func signState(app *pocketbase.PocketBase, userID, nonce string) string {
+func signState(app core.App, userID, nonce string) string {
 	payload := userID + ":" + nonce
 	mac := hmac.New(sha256.New, oauthSecret(app))
 	mac.Write([]byte(payload))
@@ -140,7 +139,7 @@ func signState(app *pocketbase.PocketBase, userID, nonce string) string {
 	return payload + ":" + sig
 }
 
-func verifyState(app *pocketbase.PocketBase, state string) (string, error) {
+func verifyState(app core.App, state string) (string, error) {
 	lastColon := -1
 	for i := len(state) - 1; i >= 0; i-- {
 		if state[i] == ':' {

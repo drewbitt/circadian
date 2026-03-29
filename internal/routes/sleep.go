@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/drewbitt/circadian/internal/templates"
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 )
 
@@ -14,7 +13,7 @@ func dateOnly(t time.Time) time.Time {
 	return time.Date(y, m, d, 0, 0, 0, 0, t.Location())
 }
 
-func registerSleepRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
+func registerSleepRoutes(se *core.ServeEvent, app core.App) {
 	// Manual sleep entry form.
 	se.Router.GET("/sleep", func(re *core.RequestEvent) error {
 		if _, err := authedUserID(re); err != nil {

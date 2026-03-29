@@ -9,12 +9,11 @@ import (
 
 	"github.com/drewbitt/circadian/internal/engine"
 	"github.com/drewbitt/circadian/internal/templates"
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/starfederation/datastar-go/datastar"
 )
 
-func registerDashboardRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
+func registerDashboardRoutes(se *core.ServeEvent, app core.App) {
 	// Full page dashboard.
 	se.Router.GET("/", func(re *core.RequestEvent) error {
 		userID, err := authedUserID(re)
@@ -67,7 +66,7 @@ func registerDashboardRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 
 }
 
-func loadTodayData(app *pocketbase.PocketBase, userID string) (engine.Schedule, engine.SleepDebt, error) {
+func loadTodayData(app core.App, userID string) (engine.Schedule, engine.SleepDebt, error) {
 	today := time.Now().Format("2006-01-02")
 
 	// Try loading cached schedule.
@@ -95,7 +94,7 @@ func loadTodayData(app *pocketbase.PocketBase, userID string) (engine.Schedule, 
 	return computeSchedule(app, userID)
 }
 
-func loadDebt(app *pocketbase.PocketBase, userID string) engine.SleepDebt {
+func loadDebt(app core.App, userID string) engine.SleepDebt {
 	fourteenDaysAgo := time.Now().AddDate(0, 0, -14).Format("2006-01-02 00:00:00")
 	records, err := app.FindRecordsByFilter(
 		"sleep_records",
@@ -127,7 +126,7 @@ func loadDebt(app *pocketbase.PocketBase, userID string) engine.SleepDebt {
 	return engine.CalculateSleepDebt(engineRecords, sleepNeed, time.Now())
 }
 
-func computeSchedule(app *pocketbase.PocketBase, userID string) (engine.Schedule, engine.SleepDebt, error) {
+func computeSchedule(app core.App, userID string) (engine.Schedule, engine.SleepDebt, error) {
 	fourteenDaysAgo := time.Now().AddDate(0, 0, -14).Format("2006-01-02 00:00:00")
 	records, err := app.FindRecordsByFilter(
 		"sleep_records",

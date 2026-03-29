@@ -9,16 +9,19 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/drewbitt/circadian/internal/templates"
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 )
 
 func registrationEnabled() bool {
-	v := strings.ToLower(os.Getenv("ALLOW_REGISTRATION"))
-	return v != "false" && v != "0"
+	switch strings.ToLower(os.Getenv("ALLOW_REGISTRATION")) {
+	case "false", "0", "no", "off":
+		return false
+	default:
+		return true
+	}
 }
 
-func registerAuthRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
+func registerAuthRoutes(se *core.ServeEvent, app core.App) {
 	enabled := registrationEnabled()
 
 	se.Router.GET("/login", func(re *core.RequestEvent) error {

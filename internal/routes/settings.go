@@ -10,11 +10,10 @@ import (
 
 	"github.com/drewbitt/circadian/internal/ingest"
 	"github.com/drewbitt/circadian/internal/templates"
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 )
 
-func registerSettingsRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
+func registerSettingsRoutes(se *core.ServeEvent, app core.App) {
 	se.Router.GET("/settings", func(re *core.RequestEvent) error {
 		userID, err := authedUserID(re)
 		if err != nil {

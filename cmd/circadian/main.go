@@ -8,6 +8,7 @@ import (
 	"github.com/drewbitt/circadian/assets"
 	"github.com/drewbitt/circadian/internal/ingest"
 	"github.com/drewbitt/circadian/internal/routes"
+	"github.com/drewbitt/circadian/internal/schema"
 	"github.com/drewbitt/circadian/internal/services"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -22,7 +23,9 @@ func main() {
 	app.OnServe().Bind(&hook.Handler[*core.ServeEvent]{
 		Id: "init-collections",
 		Func: func(se *core.ServeEvent) error {
-			ensureCollections(app)
+			if err := schema.EnsureCollections(app); err != nil {
+				slog.Error("failed to ensure collections", "error", err)
+			}
 			return se.Next()
 		},
 	})
@@ -74,77 +77,7 @@ func main() {
 	}
 }
 
-func ensureCollections(app *pocketbase.PocketBase) {
-	// sleep_records
-	if _, err := app.FindCollectionByNameOrId("sleep_records"); err != nil {
-		c := core.NewBaseCollection("sleep_records", "")
-		authRule := "@request.auth.id != '' && user = @request.auth.id"
-		c.ListRule = &authRule
-		c.ViewRule = &authRule
-		c.CreateRule = &authRule
-		c.UpdateRule = &authRule
-		c.DeleteRule = &authRule
-		c.Fields.Add(
-			&core.RelationField{Name: "user", Required: true, CollectionId: "_pb_users_auth_", MaxSelect: 1},
-			&core.DateField{Name: "date", Required: true},
-			&core.DateField{Name: "sleep_start", Required: true},
-			&core.DateField{Name: "sleep_end", Required: true},
-			&core.TextField{Name: "source", Required: true},
-			&core.NumberField{Name: "duration_minutes", Required: true},
-			&core.NumberField{Name: "deep_minutes"},
-			&core.NumberField{Name: "rem_minutes"},
-			&core.NumberField{Name: "light_minutes"},
-			&core.NumberField{Name: "awake_minutes"},
-		)
-		if err := app.Save(c); err != nil {
-			slog.Error("failed to create sleep_records collection", "error", err)
-		}
-	}
 
-	// energy_schedules
-	if _, err := app.FindCollectionByNameOrId("energy_schedules"); err != nil {
-		c := core.NewBaseCollection("energy_schedules", "")
-		authRule := "@request.auth.id != '' && user = @request.auth.id"
-		c.ListRule = &authRule
-		c.ViewRule = &authRule
-		c.Fields.Add(
-			&core.RelationField{Name: "user", Required: true, CollectionId: "_pb_users_auth_", MaxSelect: 1},
-			&core.DateField{Name: "date", Required: true},
-			&core.DateField{Name: "wake_time", Required: true},
-			&core.JSONField{Name: "schedule_json", MaxSize: 1000000},
-		)
-		if err := app.Save(c); err != nil {
-			slog.Error("failed to create energy_schedules collection", "error", err)
-		}
-	}
-
-	// settings
-	if _, err := app.FindCollectionByNameOrId("settings"); err != nil {
-		c := core.NewBaseCollection("settings", "")
-		authRule := "@request.auth.id != '' && user = @request.auth.id"
-		c.ListRule = &authRule
-		c.ViewRule = &authRule
-		c.CreateRule = &authRule
-		c.UpdateRule = &authRule
-		c.Fields.Add(
-			&core.RelationField{Name: "user", Required: true, CollectionId: "_pb_users_auth_", MaxSelect: 1},
-			&core.NumberField{Name: "sleep_need_hours"},
-			&core.TextField{Name: "ntfy_topic"},
-			&core.TextField{Name: "ntfy_server"},
-			&core.TextField{Name: "ntfy_access_token"},
-			&core.TextField{Name: "site_url"},
-			&core.TextField{Name: "fitbit_client_id"},
-			&core.TextField{Name: "fitbit_client_secret"},
-			&core.TextField{Name: "fitbit_access_token"},
-			&core.TextField{Name: "fitbit_refresh_token"},
-			&core.DateField{Name: "fitbit_token_expiry"},
-			&core.BoolField{Name: "notifications_enabled"},
-		)
-		if err := app.Save(c); err != nil {
-			slog.Error("failed to create settings collection", "error", err)
-		}
-	}
-}
 
 func runMorningJobForAllUsers(app *pocketbase.PocketBase) {
 	users, err := app.FindAllRecords("users")

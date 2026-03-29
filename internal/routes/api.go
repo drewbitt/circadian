@@ -11,7 +11,6 @@ import (
 
 	"github.com/drewbitt/circadian/internal/engine"
 	"github.com/drewbitt/circadian/internal/ingest"
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 )
 
@@ -37,7 +36,7 @@ func importFileToDisk(r io.Reader, filename string, parse func(string) ([]ingest
 	return parse(tmpPath)
 }
 
-func registerAPIRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
+func registerAPIRoutes(se *core.ServeEvent, app core.App) {
 	// Get today's energy schedule.
 	se.Router.GET("/api/schedule", func(re *core.RequestEvent) error {
 		userID, err := authedUserID(re)
