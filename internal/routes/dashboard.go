@@ -70,14 +70,6 @@ func registerDashboardRoutes(se *core.ServeEvent, app *pocketbase.PocketBase) {
 		return nil
 	})
 
-	// Login page.
-	se.Router.GET("/login", func(re *core.RequestEvent) error {
-		var buf bytes.Buffer
-		templates.Login().Render(re.Request.Context(), &buf)
-		re.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
-		re.Response.Write(buf.Bytes())
-		return nil
-	})
 }
 
 func loadTodayData(app *pocketbase.PocketBase, userID string) (engine.Schedule, engine.SleepDebt, error) {

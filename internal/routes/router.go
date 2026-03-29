@@ -12,6 +12,7 @@ func Register(app *pocketbase.PocketBase) {
 	app.OnServe().Bind(&hook.Handler[*core.ServeEvent]{
 		Id: "circadian-routes",
 		Func: func(se *core.ServeEvent) error {
+			registerAuthRoutes(se, app)
 			registerDashboardRoutes(se, app)
 			registerSleepRoutes(se, app)
 			registerSettingsRoutes(se, app)

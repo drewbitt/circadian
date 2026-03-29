@@ -31,6 +31,8 @@ FROM gcr.io/distroless/static-debian12
 
 COPY --from=build /app /app
 
+ENV ALLOW_REGISTRATION=true
+
 EXPOSE 8090
 
 CMD ["/app", "serve", "--http=0.0.0.0:8090"]
