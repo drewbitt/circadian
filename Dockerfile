@@ -1,18 +1,20 @@
 # syntax=docker/dockerfile:1
-FROM golang:1.26 AS build
+FROM --platform=$BUILDPLATFORM golang:1.26 AS build
+
+ARG TARGETOS TARGETARCH
+ARG TAILWIND_VERSION=4.2.2
+ARG TEMPL_VERSION=v0.3.1001
 
 WORKDIR /src
 
-ARG TAILWIND_VERSION=4.2.2
-
-RUN go install github.com/a-h/templ/cmd/templ@latest
+RUN go install github.com/a-h/templ/cmd/templ@${TEMPL_VERSION}
 
 RUN ARCH=$(uname -m) && \
     case "$ARCH" in \
-      x86_64) ARCH="x64" ;; \
-      aarch64) ARCH="arm64" ;; \
+      x86_64) TW_ARCH="x64" ;; \
+      aarch64) TW_ARCH="arm64" ;; \
     esac && \
-    curl -fSL "https://github.com/tailwindlabs/tailwindcss/releases/download/v${TAILWIND_VERSION}/tailwindcss-linux-${ARCH}" \
+    curl -fSL "https://github.com/tailwindlabs/tailwindcss/releases/download/v${TAILWIND_VERSION}/tailwindcss-linux-${TW_ARCH}" \
     -o /usr/local/bin/tailwindcss && \
     chmod +x /usr/local/bin/tailwindcss
 
@@ -29,11 +31,13 @@ RUN mkdir -p assets/dist && \
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 go build -o /app ./cmd/meridian
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -o /app ./cmd/meridian
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 go build -o /healthcheck ./cmd/healthcheck
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -o /healthcheck ./cmd/healthcheck
 
 RUN mkdir /pb_data
 
