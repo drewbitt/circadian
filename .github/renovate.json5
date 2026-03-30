@@ -1,0 +1,38 @@
+{
+	$schema: 'https://docs.renovatebot.com/renovate-schema.json',
+	extends: ['config:recommended', ':semanticCommits'],
+	configMigration: true,
+	platformAutomerge: true,
+	postUpdateOptions: ['gomodTidy'],
+	minimumReleaseAge: '3 days',
+	prConcurrentLimit: 5,
+	timezone: 'America/New_York',
+	vulnerabilityAlerts: {
+		enabled: true,
+		labels: ['security'],
+		minimumReleaseAge: '0 days',
+		schedule: ['at any time']
+	},
+	labels: ['dependencies'],
+	packageRules: [
+		{
+			matchUpdateTypes: ['minor', 'patch', 'pin', 'digest'],
+			automerge: true,
+			schedule: ['after 5:00pm on Monday']
+		},
+		{
+			matchUpdateTypes: ['major'],
+			dependencyDashboardApproval: true
+		},
+		{
+			matchDatasources: ['go'],
+			matchPackageNames: ['/^golang\\.org/x//'],
+			groupName: 'golang.org/x packages'
+		},
+		{
+			matchDatasources: ['go'],
+			matchPackageNames: ['/^modernc\\.org//'],
+			groupName: 'modernc.org packages'
+		}
+	]
+}
