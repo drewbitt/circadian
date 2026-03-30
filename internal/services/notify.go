@@ -31,7 +31,7 @@ type Notification struct {
 	Title       string
 	Message     string
 	Priority    int
-	Delay       time.Duration
+	At          time.Time // scheduled delivery time (zero = immediate)
 	Tags        []string
 	Click       string
 	Actions     []Action
@@ -52,8 +52,11 @@ func SendNotification(n Notification) error {
 	req.Header.Set("Title", n.Title)
 	req.Header.Set("Priority", strconv.Itoa(n.Priority))
 
-	if n.Delay > 0 {
-		req.Header.Set("Delay", formatDuration(n.Delay))
+	if !n.At.IsZero() {
+		if n.At.Before(time.Now()) {
+			return nil // past, skip silently
+		}
+		req.Header.Set("At", strconv.FormatInt(n.At.Unix(), 10))
 	}
 	if len(n.Tags) > 0 {
 		req.Header.Set("Tags", strings.Join(n.Tags, ","))
@@ -82,20 +85,4 @@ func SendNotification(n Notification) error {
 		return fmt.Errorf("ntfy returned status %d: %w", resp.StatusCode, errNtfyStatus)
 	}
 	return nil
-}
-
-func formatDuration(d time.Duration) string {
-	if d < time.Minute {
-		return ""
-	}
-	h := int(d.Hours())
-	m := int(d.Minutes()) % 60
-	switch {
-	case h > 0 && m > 0:
-		return fmt.Sprintf("%dh%dm", h, m)
-	case h > 0:
-		return fmt.Sprintf("%dh", h)
-	default:
-		return fmt.Sprintf("%dm", m)
-	}
 }

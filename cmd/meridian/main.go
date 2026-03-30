@@ -61,13 +61,13 @@ func main() {
 		},
 	})
 
-	// Cron uses the server timezone (set via TZ env var).
-	// Fitbit sync runs first so the morning job has fresh data at 8 AM.
 	app.Cron().MustAdd("fitbit-sync", "*/30 * * * *", func() {
 		syncFitbitForAllUsers(app)
 	})
 
-	app.Cron().MustAdd("morning-schedule", "0 8 * * *", func() {
+	// Morning job runs every 15 min but only processes users whose local
+	// time is 8 AM. RunMorningJob is idempotent (dedupes by date).
+	app.Cron().MustAdd("morning-schedule", "*/15 * * * *", func() {
 		runMorningJobForAllUsers(app)
 	})
 
@@ -83,6 +83,10 @@ func runMorningJobForAllUsers(app *pocketbase.PocketBase) {
 		return
 	}
 	for _, user := range users {
+		loc := services.UserLocation(app, user.Id)
+		if time.Now().In(loc).Hour() != 8 {
+			continue
+		}
 		if err := services.RunMorningJob(app, user.Id); err != nil {
 			slog.Error("morning job failed", "user_id", user.Id, "error", err)
 		}
