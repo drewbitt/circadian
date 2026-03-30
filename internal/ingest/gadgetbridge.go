@@ -73,7 +73,7 @@ func parseGBSleepSessions(db *sql.DB) ([]SleepRecord, error) {
 		start := time.Unix(startTS, 0)
 		end := time.Unix(endTS, 0)
 		records = append(records, SleepRecord{
-			Date:            dateOnly(start),
+			Date:            DateOnly(start),
 			SleepStart:      start,
 			SleepEnd:        end,
 			Source:          SourceGadgetbridge,
@@ -156,7 +156,7 @@ func parseGBActivitySamples(db *sql.DB) ([]SleepRecord, error) {
 		start := time.Unix(periodStart, 0)
 		end := time.Unix(periodEnd, 0)
 		records = append(records, SleepRecord{
-			Date:            dateOnly(start),
+			Date:            DateOnly(start),
 			SleepStart:      start,
 			SleepEnd:        end,
 			Source:          SourceGadgetbridge,

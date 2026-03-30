@@ -4,14 +4,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/drewbitt/meridian/internal/ingest"
 	"github.com/drewbitt/meridian/internal/templates"
 	"github.com/pocketbase/pocketbase/core"
 )
-
-func dateOnly(t time.Time) time.Time {
-	y, m, d := t.Date()
-	return time.Date(y, m, d, 0, 0, 0, 0, t.Location())
-}
 
 func registerSleepRoutes(se *core.ServeEvent, app core.App) {
 	// Manual sleep entry form.
@@ -56,7 +52,7 @@ func registerSleepRoutes(se *core.ServeEvent, app core.App) {
 		if duration > 24*60 {
 			return re.BadRequestError("Sleep duration cannot exceed 24 hours", nil)
 		}
-		sleepDate := dateOnly(sleepStart)
+		sleepDate := ingest.DateOnly(sleepStart)
 
 		collection, err := app.FindCollectionByNameOrId("sleep_records")
 		if err != nil {

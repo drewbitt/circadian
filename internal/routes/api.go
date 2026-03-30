@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,8 +15,6 @@ import (
 )
 
 const maxUploadSize = 100 << 20
-
-var errUnknownSource = errors.New("unknown import source")
 
 func importFileToDisk(r io.Reader, filename string, parse func(string) ([]ingest.SleepRecord, error)) ([]ingest.SleepRecord, error) {
 	safeName := filepath.Base(filename)
@@ -58,8 +55,22 @@ func parseImportSource(r io.Reader, filename, source string) ([]ingest.SleepReco
 	case "gadgetbridge":
 		return importFileToDisk(io.LimitReader(r, maxUploadSize), filename, ingest.ParseGadgetbridge)
 	default:
-		return nil, fmt.Errorf("%w: %s", errUnknownSource, source)
+		return nil, fmt.Errorf("%w: %s", ingest.ErrUnknownSource, source)
 	}
+}
+
+// importAndUpsert parses the uploaded file and upserts all records for the user.
+func importAndUpsert(app core.App, userID string, file io.Reader, filename, source string) (imported, total int, err error) {
+	records, err := parseImportSource(file, filename, source)
+	if err != nil {
+		return 0, 0, err
+	}
+	for _, rec := range records {
+		if _, err := services.UpsertSleepRecord(app, userID, rec); err == nil {
+			imported++
+		}
+	}
+	return imported, len(records), nil
 }
 
 func registerAPIRoutes(se *core.ServeEvent, app core.App) {
@@ -99,21 +110,14 @@ func registerAPIRoutes(se *core.ServeEvent, app core.App) {
 		}
 		defer file.Close()
 
-		records, err := parseImportSource(file, header.Filename, source)
+		imported, total, err := importAndUpsert(app, userID, file, header.Filename, source)
 		if err != nil {
 			return re.BadRequestError("Failed to parse file", err)
 		}
 
-		imported := 0
-		for _, rec := range records {
-			if _, err := services.UpsertSleepRecord(app, userID, rec); err == nil {
-				imported++
-			}
-		}
-
 		return re.JSON(http.StatusOK, map[string]any{
 			"imported": imported,
-			"total":    len(records),
+			"total":    total,
 		})
 	})
 

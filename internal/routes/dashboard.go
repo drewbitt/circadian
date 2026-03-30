@@ -96,10 +96,6 @@ func loadTodayData(app core.App, userID string) (engine.Schedule, engine.SleepDe
 	}
 
 	// No cached schedule — compute on the fly.
-	return computeSchedule(app, userID)
-}
-
-func computeSchedule(app core.App, userID string) (engine.Schedule, engine.SleepDebt, error) {
 	schedule, _, debt, err := services.ComputeUserSchedule(app, userID)
 	return schedule, debt, err
 }

@@ -179,32 +179,7 @@ func fitbitConfigForUser(app core.App, userID string) *oauth2.Config {
 		return nil
 	}
 
-	return buildFitbitConfig(app, settings)
-}
-
-// buildFitbitConfig creates an OAuth2 config from a settings record.
-func buildFitbitConfig(app core.App, settings *core.Record) *oauth2.Config {
-	clientID := settings.GetString("fitbit_client_id")
-	clientSecret := settings.GetString("fitbit_client_secret")
-	if clientID == "" || clientSecret == "" {
-		return nil
-	}
-
-	siteURL := settings.GetString("site_url")
-	if siteURL == "" {
-		siteURL = app.Settings().Meta.AppURL
-	}
-
-	return &oauth2.Config{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		Scopes:       []string{"sleep", "profile"},
-		Endpoint: oauth2.Endpoint{ //nolint:gosec // OAuth URLs, not credentials
-			AuthURL:  "https://www.fitbit.com/oauth2/authorize",
-			TokenURL: "https://api.fitbit.com/oauth2/token",
-		},
-		RedirectURL: strings.TrimRight(siteURL, "/") + "/auth/fitbit/callback",
-	}
+	return services.FitbitConfigFromSettings(app, settings)
 }
 
 func generateNonce() (string, error) {

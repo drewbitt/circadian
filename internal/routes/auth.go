@@ -108,22 +108,22 @@ func registerAuthRoutes(se *core.ServeEvent, app core.App) {
 }
 
 func render(re *core.RequestEvent, comp templ.Component) error {
+	return renderWithStatus(re, http.StatusOK, comp)
+}
+
+func renderWithStatus(re *core.RequestEvent, status int, comp templ.Component) error {
 	var buf bytes.Buffer
 	if err := comp.Render(re.Request.Context(), &buf); err != nil {
 		return re.InternalServerError("render failed", err)
 	}
 	re.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if status != http.StatusOK {
+		re.Response.WriteHeader(status)
+	}
 	_, err := re.Response.Write(buf.Bytes())
 	return err
 }
 
 func renderRegisterError(re *core.RequestEvent, errMsg string) error {
-	var buf bytes.Buffer
-	if err := templates.Register(errMsg).Render(re.Request.Context(), &buf); err != nil {
-		return re.InternalServerError("render failed", err)
-	}
-	re.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
-	re.Response.WriteHeader(http.StatusBadRequest)
-	_, err := re.Response.Write(buf.Bytes())
-	return err
+	return renderWithStatus(re, http.StatusBadRequest, templates.Register(errMsg))
 }

@@ -84,11 +84,9 @@ func registerSettingsRoutes(se *core.ServeEvent, app core.App) {
 	})
 
 	se.Router.POST("/settings/test-notification", func(re *core.RequestEvent) error {
-		userID, err := authedUserID(re)
-		if err != nil {
+		if _, err := authedUserID(re); err != nil {
 			return re.JSON(401, map[string]string{"error": "not authenticated"})
 		}
-		_ = userID
 
 		if err := re.Request.ParseForm(); err != nil {
 			return re.JSON(400, map[string]string{"error": "invalid data"})
@@ -139,16 +137,9 @@ func registerSettingsRoutes(se *core.ServeEvent, app core.App) {
 		}
 		defer file.Close()
 
-		records, err := parseImportSource(file, header.Filename, source)
+		imported, _, err := importAndUpsert(app, userID, file, header.Filename, source)
 		if err != nil {
 			return re.Redirect(http.StatusSeeOther, "/settings?import_error=Failed+to+parse+file")
-		}
-
-		imported := 0
-		for _, rec := range records {
-			if _, err := services.UpsertSleepRecord(app, userID, rec); err == nil {
-				imported++
-			}
 		}
 
 		return re.Redirect(http.StatusSeeOther, fmt.Sprintf("/settings?imported=%d", imported))

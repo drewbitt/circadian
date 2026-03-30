@@ -50,7 +50,7 @@ func SyncFitbitUser(app core.App, s *core.Record, start, end time.Time) error {
 		s = fresh
 	}
 
-	cfg := fitbitConfigFromSettings(app, s)
+	cfg := FitbitConfigFromSettings(app, s)
 	if cfg == nil {
 		return fmt.Errorf("%w for user %s", errFitbitCredentials, userID)
 	}
@@ -117,7 +117,9 @@ func SyncFitbitUser(app core.App, s *core.Record, start, end time.Time) error {
 	return nil
 }
 
-func fitbitConfigFromSettings(app core.App, s *core.Record) *oauth2.Config {
+// FitbitConfigFromSettings builds a Fitbit OAuth2 config from a settings record.
+// Returns nil if client credentials are missing.
+func FitbitConfigFromSettings(app core.App, s *core.Record) *oauth2.Config {
 	clientID := s.GetString("fitbit_client_id")
 	clientSecret := s.GetString("fitbit_client_secret")
 	if clientID == "" || clientSecret == "" {

@@ -11,10 +11,10 @@ import (
 
 var errNoRecords = errors.New("failed to load records")
 
-func loadUserRecords(app core.App, userID string) (records []*core.Record, sleepNeed float64) {
+func loadUserRecords(app core.App, userID string) (records []*core.Record, sleepNeed float64, loc *time.Location) {
 	// Load settings first so we can use the user's timezone for the date window.
 	sleepNeed = 8.0
-	loc := time.Local
+	loc = time.Local
 	settings, err := app.FindFirstRecordByFilter("settings", "user = {:user}", map[string]any{"user": userID})
 	if err == nil {
 		if sn := settings.GetFloat("sleep_need_hours"); sn > 0 {
@@ -31,19 +31,18 @@ func loadUserRecords(app core.App, userID string) (records []*core.Record, sleep
 		map[string]any{"user": userID, "since": fourteenDaysAgo},
 	)
 	if err != nil {
-		return nil, sleepNeed
+		return nil, sleepNeed, loc
 	}
-	return records, sleepNeed
+	return records, sleepNeed, loc
 }
 
 // ComputeUserDebt loads sleep records and settings for a user, then
 // computes the current sleep debt.
 func ComputeUserDebt(app core.App, userID string) engine.SleepDebt {
-	records, sleepNeed := loadUserRecords(app, userID)
+	records, sleepNeed, loc := loadUserRecords(app, userID)
 	if records == nil {
 		return engine.SleepDebt{}
 	}
-	loc := UserLocation(app, userID)
 	engineRecords, _ := ConvertSleepRecords(records)
 	return engine.CalculateSleepDebt(engineRecords, sleepNeed, time.Now().In(loc))
 }
@@ -54,12 +53,11 @@ func ComputeUserDebt(app core.App, userID string) engine.SleepDebt {
 // classification), and the sleep debt. Raw points are stored for caching;
 // zones are re-derived on load.
 func ComputeUserSchedule(app core.App, userID string) (engine.Schedule, []engine.EnergyPoint, engine.SleepDebt, error) {
-	records, sleepNeed := loadUserRecords(app, userID)
+	records, sleepNeed, loc := loadUserRecords(app, userID)
 	if records == nil {
 		return engine.Schedule{}, nil, engine.SleepDebt{}, errNoRecords
 	}
 
-	loc := UserLocation(app, userID)
 	now := time.Now().In(loc)
 
 	engineRecords, periods := ConvertSleepRecords(records)
