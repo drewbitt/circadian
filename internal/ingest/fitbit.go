@@ -47,8 +47,45 @@ type fitbitStageSummary struct {
 
 var fitbitBaseURL = "https://api.fitbit.com/1.2"
 
+// fitbitProfileResponse maps the subset of the Fitbit profile we need.
+type fitbitProfileResponse struct {
+	User struct {
+		Timezone string `json:"timezone"` // IANA, e.g. "America/New_York"
+	} `json:"user"`
+}
+
+// FetchFitbitTimezone returns the IANA timezone from the user's Fitbit profile.
+func FetchFitbitTimezone(ctx context.Context, token *oauth2.Token) (*time.Location, error) {
+	client := FitbitOAuthConfig.Client(ctx, token)
+
+	resp, err := client.Get("https://api.fitbit.com/1/user/-/profile.json")
+	if err != nil {
+		return nil, fmt.Errorf("fitbit profile request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("fitbit profile returned %d: %s: %w", resp.StatusCode, body, errFitbitAPI)
+	}
+
+	var profile fitbitProfileResponse
+	if err := json.NewDecoder(resp.Body).Decode(&profile); err != nil {
+		return nil, fmt.Errorf("decode fitbit profile: %w", err)
+	}
+
+	loc, err := time.LoadLocation(profile.User.Timezone)
+	if err != nil {
+		return nil, fmt.Errorf("invalid fitbit timezone %q: %w", profile.User.Timezone, err)
+	}
+	return loc, nil
+}
+
 // FetchFitbitSleep retrieves sleep data for a given date from the Fitbit API.
-func FetchFitbitSleep(ctx context.Context, token *oauth2.Token, date time.Time) ([]SleepRecord, error) {
+// loc is the user's Fitbit profile timezone — Fitbit returns times without
+// offsets, so we need it to interpret them correctly. Use FetchFitbitTimezone
+// to obtain this.
+func FetchFitbitSleep(ctx context.Context, token *oauth2.Token, date time.Time, loc *time.Location) ([]SleepRecord, error) {
 	client := FitbitOAuthConfig.Client(ctx, token)
 
 	dateStr := date.Format("2006-01-02")
@@ -76,15 +113,15 @@ func FetchFitbitSleep(ctx context.Context, token *oauth2.Token, date time.Time) 
 			continue
 		}
 
-		start, err := time.Parse("2006-01-02T15:04:05.000", sl.StartTime)
+		start, err := time.ParseInLocation("2006-01-02T15:04:05.000", sl.StartTime, loc)
 		if err != nil {
 			continue
 		}
-		end, err := time.Parse("2006-01-02T15:04:05.000", sl.EndTime)
+		end, err := time.ParseInLocation("2006-01-02T15:04:05.000", sl.EndTime, loc)
 		if err != nil {
 			continue
 		}
-		sleepDate, err := time.Parse("2006-01-02", sl.DateOfSleep)
+		sleepDate, err := time.ParseInLocation("2006-01-02", sl.DateOfSleep, loc)
 		if err != nil {
 			continue
 		}

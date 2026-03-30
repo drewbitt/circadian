@@ -714,11 +714,12 @@ func TestFetchFitbitSleep(t *testing.T) {
 	fitbitBaseURL = srv.URL
 	defer func() { fitbitBaseURL = orig }()
 
+	est, _ := time.LoadLocation("America/New_York")
 	records, err := FetchFitbitSleep(t.Context(), &oauth2.Token{
 		AccessToken: "test-token",
 		TokenType:   "Bearer",
 		Expiry:      time.Now().Add(time.Hour),
-	}, time.Date(2024, 3, 11, 0, 0, 0, 0, time.UTC))
+	}, time.Date(2024, 3, 11, 0, 0, 0, 0, time.UTC), est)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -744,6 +745,12 @@ func TestFetchFitbitSleep(t *testing.T) {
 	}
 	if rec.DurationMinutes != 450 {
 		t.Errorf("duration: got %d, want 450", rec.DurationMinutes)
+	}
+	// Fitbit times are local; with EST (UTC-5 in March, but 2024-03-10 is
+	// after spring-forward so EDT = UTC-4). 23:15 EDT = 03:15 UTC next day.
+	wantStart := time.Date(2024, 3, 11, 3, 15, 0, 0, time.UTC)
+	if !rec.SleepStart.Equal(wantStart) {
+		t.Errorf("SleepStart: got %v, want %v (UTC)", rec.SleepStart.UTC(), wantStart)
 	}
 }
 
@@ -772,7 +779,7 @@ func TestFetchFitbitSleep_NonMainSleep(t *testing.T) {
 	records, err := FetchFitbitSleep(t.Context(), &oauth2.Token{
 		AccessToken: "test",
 		Expiry:      time.Now().Add(time.Hour),
-	}, time.Date(2024, 3, 11, 0, 0, 0, 0, time.UTC))
+	}, time.Date(2024, 3, 11, 0, 0, 0, 0, time.UTC), time.UTC)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -795,7 +802,7 @@ func TestFetchFitbitSleep_APIError(t *testing.T) {
 	_, err := FetchFitbitSleep(t.Context(), &oauth2.Token{
 		AccessToken: "expired",
 		Expiry:      time.Now().Add(time.Hour),
-	}, time.Date(2024, 3, 11, 0, 0, 0, 0, time.UTC))
+	}, time.Date(2024, 3, 11, 0, 0, 0, 0, time.UTC), time.UTC)
 	if err == nil {
 		t.Error("expected error for 401 response")
 	}

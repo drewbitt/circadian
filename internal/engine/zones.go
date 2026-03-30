@@ -130,12 +130,18 @@ func ClassifyZones(points []EnergyPoint, wakeTime time.Time) Schedule {
 		}
 	}
 
-	// Wind-down: after evening peak, when alertness drops below morning peak * 0.7.
-	if morningPeak != nil && eveningPeak != nil {
-		windDownThreshold := morningPeak.value * 0.7
+	// Wind-down: after the first local peak (evening peak when present, or the
+	// global circadian peak), mark points where alertness drops below 70% of
+	// that peak value.
+	peakForWindDown := eveningPeak
+	if peakForWindDown == nil && morningPeak != nil {
+		peakForWindDown = morningPeak
+	}
+	if peakForWindDown != nil {
+		windDownThreshold := peakForWindDown.value * 0.7
 		for i := range classified {
 			p := &classified[i]
-			if p.Time.After(eveningPeak.time) && p.Alertness < windDownThreshold && p.Zone == ZoneNormal {
+			if p.Time.After(peakForWindDown.time) && p.Alertness < windDownThreshold && p.Zone == ZoneNormal {
 				if p.Time.Before(melStart) {
 					p.Zone = ZoneWindDown
 				}
@@ -156,10 +162,22 @@ func ClassifyZones(points []EnergyPoint, wakeTime time.Time) Schedule {
 		sched.OptimalNapEnd = afternoonDip.time.Add(30 * time.Minute)
 	}
 
-	// Best focus hours: morning peak zone boundaries.
-	if morningPeak != nil {
-		sched.BestFocusStart = morningPeak.time.Add(-60 * time.Minute)
-		sched.BestFocusEnd = morningPeak.time.Add(60 * time.Minute)
+	// Best focus: 2h window centred on the model's actual alertness peak in
+	// the wake window (up to melatonin onset). The FIPS model produces a
+	// single circadian peak per day (~17:00–18:00 for typical schedules),
+	// not a separate morning peak, so we use the global maximum directly.
+	var peakIdx int
+	for i, p := range classified {
+		if !p.Time.Before(inertiaEnd) && p.Time.Before(melStart) {
+			if classified[peakIdx].Time.Before(inertiaEnd) || p.Alertness > classified[peakIdx].Alertness {
+				peakIdx = i
+			}
+		}
+	}
+	if !classified[peakIdx].Time.Before(inertiaEnd) {
+		peakTime := classified[peakIdx].Time
+		sched.BestFocusStart = peakTime.Add(-60 * time.Minute)
+		sched.BestFocusEnd = peakTime.Add(60 * time.Minute)
 	}
 
 	return sched

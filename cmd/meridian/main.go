@@ -122,9 +122,17 @@ func syncFitbitForAllUsers(app *pocketbase.PocketBase) {
 			token = newToken
 		}
 
+		// Fetch user's timezone from Fitbit profile — their API returns
+		// sleep times in this timezone without offsets.
+		loc, err := ingest.FetchFitbitTimezone(context.Background(), token)
+		if err != nil {
+			slog.Warn("could not fetch fitbit timezone, falling back to UTC", "user_id", userID, "error", err)
+			loc = time.UTC
+		}
+
 		// Fetch yesterday's and today's sleep.
 		for _, date := range []time.Time{time.Now().AddDate(0, 0, -1), time.Now()} {
-			records, err := ingest.FetchFitbitSleep(context.Background(), token, date)
+			records, err := ingest.FetchFitbitSleep(context.Background(), token, date, loc)
 			if err != nil {
 				slog.Error("fitbit sync failed", "user_id", userID, "error", err)
 				continue

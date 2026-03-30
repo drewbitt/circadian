@@ -2,6 +2,7 @@ package templates
 
 import (
 	"fmt"
+	"time"
 	"github.com/drewbitt/meridian/internal/engine"
 )
 
@@ -34,13 +35,25 @@ templ Dashboard(schedule engine.Schedule, debt engine.SleepDebt) {
 					<h2 class="text-xs font-mono uppercase tracking-widest text-gray-600 mb-3">Key Times</h2>
 					<div class="grid grid-cols-2 gap-px bg-night-border rounded-lg overflow-hidden sm:grid-cols-4">
 						if !schedule.BestFocusStart.IsZero() {
-							@TimeCard("Best Focus", schedule.BestFocusStart.Format("3:04pm")+" - "+schedule.BestFocusEnd.Format("3:04pm"), "noon")
+							@TimeCard("Best Focus", "noon") {
+								<local-time datetime={ isoTime(schedule.BestFocusStart) }></local-time>
+								{ " – " }
+								<local-time datetime={ isoTime(schedule.BestFocusEnd) }></local-time>
+							}
 						}
-						@TimeCard("Caffeine Cutoff", schedule.CaffeineCutoff.Format("3:04pm"), "ember")
+						@TimeCard("Caffeine Cutoff", "ember") {
+							<local-time datetime={ isoTime(schedule.CaffeineCutoff) }></local-time>
+						}
 						if !schedule.OptimalNapStart.IsZero() {
-							@TimeCard("Nap Window", schedule.OptimalNapStart.Format("3:04pm")+" - "+schedule.OptimalNapEnd.Format("3:04pm"), "horizon")
+							@TimeCard("Nap Window", "horizon") {
+								<local-time datetime={ isoTime(schedule.OptimalNapStart) }></local-time>
+								{ " – " }
+								<local-time datetime={ isoTime(schedule.OptimalNapEnd) }></local-time>
+							}
 						}
-						@TimeCard("Melatonin Window", schedule.MelatoninWindow.Format("3:04pm"), "twilight")
+						@TimeCard("Melatonin Window", "twilight") {
+							<local-time datetime={ isoTime(schedule.MelatoninWindow) }></local-time>
+						}
 					</div>
 				</div>
 			}
@@ -53,10 +66,7 @@ templ Dashboard(schedule engine.Schedule, debt engine.SleepDebt) {
 				const ctx = document.getElementById('energy-chart');
 				if (!ctx) return;
 
-				const labels = points.map(p => {
-					const d = new Date(p.time);
-					return d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-				});
+				const labels = points.map(p => window.__timeFmt.format(new Date(p.time)));
 				const data = points.map(p => p.alertness);
 				const zones = points.map(p => p.zone);
 
@@ -93,6 +103,8 @@ templ Dashboard(schedule engine.Schedule, debt engine.SleepDebt) {
 							fill: true,
 							tension: 0.4,
 							pointRadius: 0,
+							pointHoverRadius: 6,
+							pointHitRadius: 20,
 							borderWidth: 2,
 						}]
 					},
@@ -112,6 +124,7 @@ templ Dashboard(schedule engine.Schedule, debt engine.SleepDebt) {
 								title: { display: true, text: 'Alertness', color: '#4b5563', font: { family: "'DM Sans', sans-serif" } },
 							},
 						},
+						interaction: { mode: 'index', intersect: false },
 						plugins: {
 							legend: { display: false },
 						},
@@ -151,11 +164,18 @@ templ TodaySchedule(schedule engine.Schedule) {
 	</div>
 }
 
-templ TimeCard(label, value, colorName string) {
+templ TimeCard(label, colorName string) {
 	<div class={ "bg-night p-4", timeCardBorder(colorName) }>
 		<div class="text-xs font-mono uppercase tracking-widest text-gray-600">{ label }</div>
-		<div class={ "text-sm font-semibold mt-1.5 font-mono", timeCardText(colorName) }>{ value }</div>
+		<div class={ "text-sm font-semibold mt-1.5 font-mono", timeCardText(colorName) }>
+			{ children... }
+		</div>
 	</div>
+}
+
+// isoTime returns an RFC 3339 UTC string for use in <time datetime="…">.
+func isoTime(t time.Time) string {
+	return t.UTC().Format(time.RFC3339)
 }
 
 func timeCardBorder(colorName string) string {

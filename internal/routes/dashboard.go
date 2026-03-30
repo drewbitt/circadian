@@ -46,6 +46,8 @@ func registerDashboardRoutes(se *core.ServeEvent, app core.App) {
 		}
 
 		// Send chart data as a script execution.
+		// Points keep their UTC timestamps; the chart JS already converts them
+		// via toLocaleTimeString() in the browser.
 		chartData, err := json.Marshal(schedule.Points)
 		if err != nil {
 			return fmt.Errorf("marshal chart data: %w", err)

@@ -5,6 +5,10 @@ templ SleepEntry() {
 		<div class="mx-auto max-w-lg">
 			<h2 class="font-display text-2xl text-gray-100 mb-6">Log Sleep</h2>
 			<form method="POST" action="/sleep" class="space-y-5">
+				<input type="hidden" name="tz" id="tz-input"/>
+				<script>
+					document.getElementById('tz-input').value = Temporal.Now.timeZoneId();
+				</script>
 				<div>
 					<label for="sleep_start" class="block text-sm font-medium text-gray-400 mb-1.5">
 						Bedtime
